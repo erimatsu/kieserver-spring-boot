@@ -1,0 +1,45 @@
+package ordercheck;
+
+import com.company.model.*;
+
+rule "T商品の加工種別と数量基準内チェック"
+    when
+        $注文:注文(商品ID matches "T.*", 加工種別 == "カット大", 注文数量 <= 30)
+    then
+        modify($注文) {
+            set注文可否(false),
+            setコメント("注文数下限未満(T_大)")
+        }
+end
+
+rule "M商品の加工種別と数量基準内チェック"
+    when
+        $注文:注文(商品ID matches "M.*", 加工種別 == "カット極小", 注文数量 <= 50)
+    then
+        modify($注文) {
+            set注文可否(false),
+            setコメント("注文数下限未満(M_極小)")
+        }
+end
+
+rule "大口顧客以外の注文数量上限チェック"
+    when
+        注文者(顧客種別 != "大口", $ID:顧客ID)
+        $注文:注文(顧客ID == $ID, 注文数量 >= 100)
+    then
+        modify($注文) {
+            set注文可否(false),
+            setコメント("注文数上限超過")
+        }
+end
+
+rule "大口顧客の注文数量上限チェック"
+    when
+        注文者(顧客種別 == "大口", $ID:顧客ID, $注文上限:注文上限)
+        $注文:注文(顧客ID == $ID, 注文数量 > $注文上限)
+    then
+        modify($注文) {
+            set注文可否(false),
+            setコメント("注文数上限超過（大口）")
+        }
+end
